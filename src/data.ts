@@ -19,16 +19,17 @@ export class Order {
   public readonly orderId!: number;
   public readonly token!: number;
   constructor(
-    public userId: User,
+    public userId: number,
     public created: Date,
     public lastUpdated: Date
   ) {}
 }
 export class Item {
   public readonly itemId!: number;
+  public version?: number;
   constructor(
-    public orderId: Order,
-    public productId: Product,
+    public orderId: number,
+    public productId: number,
     public quantity: number,
     public overridePrice: number
   ) {}
@@ -49,6 +50,7 @@ export const db = verse({
         },
         (t) => {
           t.table("users");
+          t.key("userId");
           t.data(new User("Will"), new User("Ben"));
         }
       ),
@@ -62,6 +64,7 @@ export const db = verse({
         },
         (t) => {
           t.table("products");
+          t.key("productId");
           t.data(
             new Product("Potato", "Fresh from the farm", 10),
             new Product("Banana", "Yellow and ripe", 6)
@@ -79,6 +82,7 @@ export const db = verse({
         },
         (t) => {
           t.table("orders");
+          t.key("orderId");
           t.data(new Order(0, new Date(), new Date()));
           t.concurrency({ version: "token" });
         }
@@ -95,6 +99,7 @@ export const db = verse({
         },
         (t) => {
           t.table("items");
+          t.key("itemId");
           t.data(new Item(1, 1, 2, 8));
         }
       ),

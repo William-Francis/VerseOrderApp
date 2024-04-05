@@ -4,30 +4,32 @@ import { createOrderServer } from "@/server";
 import { Button, Input, Table } from "@mui/joy";
 import { useState } from "react";
 
+type ItemType = Omit<Item, "itemId" | "version">;
+
 export function CreateOrder({ products }: { products: Array<Product> }) {
   const getFirstProduct = products[0];
-  const initialItem: Item = {
-    itemId: 1,
-    productId: getFirstProduct.productId,
-    price: getFirstProduct.price,
-    overridePrice: getFirstProduct.price,
-    quantity: 1,
-    // orderId: order.orderId,
-  };
-  const [items, setItems] = useState<Item[]>([initialItem]);
-  const [updateCount, setUpdateCount] = useState(1);
   const productsPriceDict = Object.fromEntries(
     products.map((x) => [x.productId, x.price])
   );
+  const initialItem: Item = {
+    itemId: 1,
+    productId: getFirstProduct.productId,
+    overridePrice: productsPriceDict[getFirstProduct.productId],
+    quantity: 1,
+    orderId: -1,
+  };
+  const [items, setItems] = useState<Item[]>([initialItem]);
+  const [updateCount, setUpdateCount] = useState(1);
+
   const addEmptyItem = () => {
     let itemsTemp = [
       ...items,
       {
         itemId: updateCount + 1,
         productId: getFirstProduct.productId,
-        price: getFirstProduct.price,
-        overridePrice: getFirstProduct.price,
+        overridePrice: productsPriceDict[getFirstProduct.productId],
         quantity: 1,
+        orderId: -1,
       },
     ];
     setUpdateCount(updateCount + 1);
@@ -38,17 +40,12 @@ export function CreateOrder({ products }: { products: Array<Product> }) {
     setUpdateCount(updateCount + 1);
     setItems(tempItems);
   };
-  const updateValue = (
-    property: string,
-    itemId: number,
-    value: string | number
-  ) => {
+  const updateValue = (property: string, itemId: number, value: number) => {
     const tempItems = items;
     var index = tempItems.findIndex((obj) => {
       return obj.itemId === itemId;
     });
-
-    tempItems[index][property] = value;
+    tempItems[index][property as keyof ItemType] = value;
 
     // if productId is updated we also need to update the overridePrice attribute
     if (property == "productId") {
@@ -114,7 +111,7 @@ export function CreateOrder({ products }: { products: Array<Product> }) {
                   type="number"
                   name="price"
                   disabled={true}
-                  defaultValue={productsPriceDict[obj.productId + ""]}
+                  defaultValue={productsPriceDict[obj.productId]}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
                 />
               </td>
@@ -126,7 +123,11 @@ export function CreateOrder({ products }: { products: Array<Product> }) {
                   defaultValue={obj.overridePrice}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
                   onBlur={(e) =>
-                    updateValue("overridePrice", obj.itemId, e.target.value)
+                    updateValue(
+                      "overridePrice",
+                      obj.itemId,
+                      parseInt(e.target.value)
+                    )
                   }
                 />
               </td>
@@ -137,7 +138,11 @@ export function CreateOrder({ products }: { products: Array<Product> }) {
                   defaultValue={obj.quantity}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
                   onBlur={(e) =>
-                    updateValue("quantity", obj.itemId, e.target.value)
+                    updateValue(
+                      "quantity",
+                      obj.itemId,
+                      parseInt(e.target.value)
+                    )
                   }
                 />
               </td>

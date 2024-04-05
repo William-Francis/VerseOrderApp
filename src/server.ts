@@ -1,13 +1,14 @@
 "use server";
 
-import { Item, Order, db } from "@/data";
+import { Item, Order, Product, db } from "@/data";
 import { redirect } from "next/navigation";
+type ProductType = Omit<Product, "productId" | "version">;
 
 export async function addItem(data: FormData) {
   const orderId = parseInt(data.get("orderId")?.valueOf() + "");
-  const productId = data.get("productId")?.valueOf();
-  const quantity = data.get("quantity")?.valueOf();
-  const price = data.get("price")?.valueOf();
+  const productId = parseInt(data.get("productId")?.valueOf() + "");
+  const quantity = parseInt(data.get("quantity")?.valueOf() + "");
+  const price = parseInt(data.get("price")?.valueOf() + "");
 
   const uow = db.uow();
   await uow.items.add(new Item(orderId, productId, quantity, price));
@@ -15,6 +16,7 @@ export async function addItem(data: FormData) {
 
   redirect("/orders/" + orderId);
 }
+
 export async function removeItem($itemId: number, currentOrderId: number) {
   const uow = db.uow();
   const item = await uow.items.single(
@@ -25,47 +27,51 @@ export async function removeItem($itemId: number, currentOrderId: number) {
   await uow.commit();
   redirect("/orders/" + currentOrderId);
 }
-export async function createOrderServer(data: any) {
-  console.log("createOrder data", data);
-  console.log("createOrder data length", data.length);
 
+export async function createOrderServer(data: any) {
   const uow = db.uow();
   const order = new Order(1, new Date(), new Date());
   await uow.add(order);
   await uow.commit();
-  console.log("createOrder order", order);
-  console.log("createOrder order.id", order.orderId);
   // iterate through data and add items
   let multipleObjectsCreated = new Array(data.length)
     .fill(null)
     .map((x, index) => {
-      console.log("createOrder data x", x);
-      console.log("createOrder data y", index);
       return new Item(
         order.orderId,
-        // data[index].orderId, // need to use order.id
         data[index].productId,
         data[index].quantity,
         data[index].overridePrice
       );
     });
-  console.log("createOrder multipleObjectsCreated", multipleObjectsCreated);
   await uow.items.add(...multipleObjectsCreated);
   await uow.commit();
 
   redirect("/orders");
 }
+type ErrorObj = {
+  error: string;
+  currentChange: Array<Item>;
+  serverChange: Array<Item>;
+};
 
 export async function updateOrderServer(
   items: Array<Item>,
   order: Order,
-  itemsRemoved: Array<number>
+  itemsRemoved: Array<number>,
+  forceUpdate: boolean
 ) {
-  console.log("updateOrderServer items", items);
-  console.log("updateOrderServer itemsRemoved", itemsRemoved);
-
-  // const updatedItems = items.filter((item) => item.itemId > 0);
-  // const updateItemsIds = updatedItems.map((item) => item.itemId);
+  console.log("updateOrderServer", items);
+  // if forceUpdate we need to remove version from items
+  console.log("forceUpdate");
+  if (forceUpdate) {
+    items.forEach((item) => {
+      if (item.version) {
+        delete item.version;
+      }
+    });
+  }
+  console.log("finished forceUpdate");
 
   const uow = db.uow();
 
@@ -100,7 +106,91 @@ export async function updateOrderServer(
     )
     .single();
 
-  uow.entry(order)?.update({ lastUpdated: new Date(), token: order.token });
+  // if we are forcing an update we dont include token (which checks for concurrency issues)
+  if (forceUpdate) {
+    uow.entry(orderServer)?.update({ lastUpdated: new Date() });
+  } else {
+    uow
+      .entry(orderServer)
+      ?.update({ lastUpdated: new Date(), token: order.token });
+  }
 
+  console.log("pre commit");
+  let returnObject: ErrorObj = {
+    error: "",
+    currentChange: [],
+    serverChange: [],
+  };
+  try {
+    await uow.commit();
+  } catch (e) {
+    // check if e has property message
+    const error = e as { message: string };
+
+    // if (typeof error === "string") {
+    //   throw new Error("Invalid Title");
+    // }
+    // if (error.hasOwnProperty("message")) {
+    console.error("error", error); // from creation or business logic
+    // }
+    const uow2 = db.uow();
+    const serverItems = await uow2.items
+      .where((item, $orderId) => item.orderId === $orderId, order.orderId)
+      .toArray();
+
+    returnObject = {
+      error: error.message,
+      currentChange: items,
+      serverChange: JSON.parse(JSON.stringify(serverItems)),
+    };
+    return returnObject;
+  }
+  console.log("post commit");
+  // redirect("/orders/" + order.orderId);
+  return returnObject;
+}
+export async function redirectMe(orderId: number) {
+  redirect("/orders/" + orderId);
+}
+
+export async function getProductsResults(
+  offset: number,
+  limit: number,
+  search: string
+) {
+  "use server";
+
+  const productsQueryParams = db.compile(
+    (from, $offset: number, $limit: number, $search: string) =>
+      from.products
+        .where((product) => product.name.like(`%${$search}%`))
+        .offset({ $offset })
+        .limit({ $limit })
+  );
+  const productsQueryParamsCount = db.compile((from, $search: string) =>
+    from.products.where((product) => product.name.like(`%${$search}%`)).count()
+  );
+  return {
+    count: await productsQueryParamsCount(search),
+    body: JSON.parse(
+      JSON.stringify(await productsQueryParams(offset, limit, search).toArray())
+    ),
+  };
+}
+export async function updateProduct(
+  attribute: string,
+  id: number,
+  value: string | number
+) {
+  const uow = db.uow();
+  const product = await uow.products
+    .where((product, $id) => product.productId === $id, id)
+    .single();
+  let dict: any = {};
+  dict[attribute as keyof ProductType] = value;
+  // let dict: Product = {};
+  // dict[attribute as keyof ProductType] = value;
+  uow.entry(product)?.update(dict);
   await uow.commit();
+  redirect("/products");
 }
