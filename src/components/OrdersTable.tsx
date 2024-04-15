@@ -1,8 +1,8 @@
-import { Order } from "@/data";
+import { OrderType } from "@/data";
 import { Table } from "@mui/joy";
 import Link from "next/link";
 
-export function OrdersTable({ orders }: { orders: Array<Order> }) {
+export function OrdersTable({ orders }: { orders: Array<OrderType> }) {
   return (
     <>
       <header className="flex justify-between items-center mb-4">
@@ -23,7 +23,7 @@ export function OrdersTable({ orders }: { orders: Array<Order> }) {
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => (
+          {orders.map(order => (
             <tr key={order.orderId}>
               <td>
                 <Link
@@ -34,7 +34,7 @@ export function OrdersTable({ orders }: { orders: Array<Order> }) {
                 </Link>
               </td>
               <td>{order.userId + ""}</td>
-              <td>{order.created.toDateString()}</td>
+              <td>{order.created + ""}</td>
             </tr>
           ))}
         </tbody>

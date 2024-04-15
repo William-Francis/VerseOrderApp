@@ -26,7 +26,7 @@ export function ProductsTable() {
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
-    getProductsResults(page * limit, limit, search).then((data) => {
+    getProductsResults(page * limit, limit, search).then(data => {
       setProducts(data.body);
       setMaxResults(data.count);
     });
@@ -40,15 +40,7 @@ export function ProductsTable() {
     }
     return limit === -1 ? maxResults : Math.min(maxResults, (page + 1) * limit);
   };
-  function labelDisplayedRows({
-    from,
-    to,
-    count,
-  }: {
-    from: number;
-    to: number;
-    count: number;
-  }) {
+  function labelDisplayedRows({ from, to, count }: { from: number; to: number; count: number }) {
     return `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`;
   }
   const handleChangePage = (newPage: number) => {
@@ -78,7 +70,7 @@ export function ProductsTable() {
         <h1 className="text-2xl"> </h1>
         <Button onClick={() => setEditMode(!editMode)}>Edit</Button>
       </header>
-      <Input placeholder="Search..." onBlur={(e) => handleSearch(e)} />
+      <Input placeholder="Search..." onBlur={e => handleSearch(e)} />
       <Table aria-label="basic table">
         <thead>
           <tr>
@@ -89,19 +81,21 @@ export function ProductsTable() {
           </tr>
         </thead>
         <tbody>
-          {products.map((product) => (
+          {products.map(product => (
             <tr key={product["productId"]}>
               <td>{product["productId"]}</td>
-              <Input
-                type="text"
-                name="name"
-                disabled={editMode}
-                defaultValue={product["name"]}
-                className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
-                onBlur={(e) => {
-                  updateProduct("name", product["productId"], e.target.value);
-                }}
-              />{" "}
+              <td>
+                <Input
+                  type="text"
+                  name="name"
+                  disabled={editMode}
+                  defaultValue={product["name"]}
+                  className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
+                  onBlur={e => {
+                    updateProduct("name", product["productId"], e.target.value);
+                  }}
+                />
+              </td>
               <td>
                 <Input
                   type="text"
@@ -109,14 +103,10 @@ export function ProductsTable() {
                   disabled={editMode}
                   defaultValue={product["description"]}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
-                  onBlur={(e) => {
-                    updateProduct(
-                      "description",
-                      product["productId"],
-                      e.target.value
-                    );
+                  onBlur={e => {
+                    updateProduct("description", product["productId"], e.target.value);
                   }}
-                />{" "}
+                />
               </td>
               <td>
                 <Input
@@ -125,12 +115,8 @@ export function ProductsTable() {
                   disabled={editMode}
                   defaultValue={product["price"]}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
-                  onBlur={(e) => {
-                    updateProduct(
-                      "price",
-                      product["productId"],
-                      e.target.value
-                    );
+                  onBlur={e => {
+                    updateProduct("price", product["productId"], e.target.value);
                   }}
                 />
               </td>
@@ -179,9 +165,7 @@ export function ProductsTable() {
                     color="neutral"
                     variant="outlined"
                     disabled={
-                      products.length !== -1
-                        ? page >= Math.ceil(maxResults / limit) - 1
-                        : false
+                      products.length !== -1 ? page >= Math.ceil(maxResults / limit) - 1 : false
                     }
                     onClick={() => handleChangePage(page + 1)}
                     sx={{ bgcolor: "background.surface" }}

@@ -1,4 +1,4 @@
-import { Product, db } from "@/data";
+import { ProductType, db } from "@/data";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -15,7 +15,7 @@ async function addProduct(data: FormData) {
   }
 
   const uow = db.uow();
-  await uow.products.add(new Product(name, description, price));
+  await uow.products.add({ name: name, description: description, price: price } as ProductType);
   await uow.commit();
 
   redirect("/products");
@@ -32,19 +32,19 @@ export default async function Page() {
         <input
           type="text"
           name="name"
-          className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
+          className="border border-slate-300 bg-transparent rounded px-2 py-2 outline-none focus-within:border-slate-100"
         />
         <label className="block mb-2 text-sm font-medium">Description</label>
         <input
           type="text"
           name="description"
-          className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
+          className="border border-slate-300 bg-transparent rounded px-2 py-2 outline-none focus-within:border-slate-100"
         />
         <label className="block mb-2 text-sm font-medium">Price</label>
         <input
           type="number"
           name="price"
-          className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
+          className="border border-slate-300 bg-transparent rounded px-2 py-2 outline-none focus-within:border-slate-100"
         />
 
         <div className="flex gap-1 justify-end">

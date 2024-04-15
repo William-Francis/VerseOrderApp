@@ -1,108 +1,104 @@
 import { verse } from "@operativa/verse";
 import { sqlite } from "@operativa/verse-sqlite";
-import { date, entity, int, string } from "@operativa/verse/model/builder";
+import { boolean, date, entity, int, string } from "@operativa/verse/model/builder";
 import { PrettyConsoleLogger } from "@operativa/verse/utils/logging";
 
-export class User {
-  public readonly userId!: number;
-  constructor(public firstName: string) {}
-}
-export class Product {
-  public readonly productId!: number;
-  constructor(
-    public name: string,
-    public description: string,
-    public price: number
-  ) {}
-}
-export class Order {
-  public readonly orderId!: number;
-  public readonly token!: number;
-  constructor(
-    public userId: number,
-    public created: Date,
-    public lastUpdated: Date
-  ) {}
-}
-export class Item {
-  public readonly itemId!: number;
-  public version?: number;
-  constructor(
-    public orderId: number,
-    public productId: number,
-    public quantity: number,
-    public overridePrice: number
-  ) {}
-}
+export type ProductType = {
+  productId: number;
+  name: string;
+  description: string;
+  price: number;
+};
+
+const Product = entity(
+  {
+    productId: int(),
+    name: string(),
+    description: string(),
+    price: int(),
+  },
+  builder => {
+    builder.table("products");
+    builder.key("productId");
+  }
+);
+
+export type OrderType = {
+  orderId: number;
+  token: number;
+  userId: number;
+  created: Date;
+  lastUpdated: Date;
+  lock: boolean;
+};
+
+const Order = entity(
+  {
+    orderId: int(),
+    token: int({ generate: { default: 1 } }),
+    userId: int(),
+    created: date(),
+    lastUpdated: date(),
+    lock: boolean(),
+  },
+  builder => {
+    builder.table("orders");
+    builder.key("orderId");
+    builder.concurrency({ version: "token" });
+  }
+);
+
+export type ItemType = {
+  itemId: number;
+  version?: number;
+  orderId: number;
+  productId: number;
+  quantity: number;
+  overridePrice: number;
+};
+
+const Item = entity(
+  {
+    itemId: int(),
+    version: int({ column: "_version" }),
+    orderId: int(),
+    productId: int(),
+    quantity: int(),
+    overridePrice: int(),
+  },
+  builder => {
+    builder.table("items");
+    builder.key("itemId");
+  }
+);
+
+export type UserType = {
+  userId: number;
+  firstName: string;
+};
+
+const User = entity(
+  {
+    userId: int(),
+    firstName: string(),
+  },
+  builder => {
+    builder.table("users");
+    builder.key("userId");
+  }
+);
 
 export const db = verse({
   config: {
-    driver: sqlite("basic.sqlite"),
+    driver: sqlite("order.sqlite"),
     logger: new PrettyConsoleLogger(),
   },
   model: {
     entities: {
-      users: entity(
-        User,
-        {
-          userId: int(),
-          firstName: string(),
-        },
-        (t) => {
-          t.table("users");
-          t.key("userId");
-          t.data(new User("Will"), new User("Ben"));
-        }
-      ),
-      products: entity(
-        Product,
-        {
-          productId: int(),
-          name: string(),
-          description: string(),
-          price: int(),
-        },
-        (t) => {
-          t.table("products");
-          t.key("productId");
-          t.data(
-            new Product("Potato", "Fresh from the farm", 10),
-            new Product("Banana", "Yellow and ripe", 6)
-          );
-        }
-      ),
-      orders: entity(
-        Order,
-        {
-          orderId: int(),
-          userId: int(),
-          created: date(),
-          lastUpdated: date(),
-          token: int({ generate: { default: 1 } }),
-        },
-        (t) => {
-          t.table("orders");
-          t.key("orderId");
-          t.data(new Order(0, new Date(), new Date()));
-          t.concurrency({ version: "token" });
-        }
-      ),
-      items: entity(
-        Item,
-        {
-          itemId: int(),
-          orderId: int(),
-          productId: int(),
-          quantity: int(),
-          overridePrice: int(),
-          version: int({ column: "_version" }),
-        },
-        (t) => {
-          t.table("items");
-          t.key("itemId");
-          t.data(new Item(1, 1, 2, 8));
-        }
-      ),
+      users: User,
+      products: Product,
+      orders: Order,
+      items: Item,
     },
   },
 });
