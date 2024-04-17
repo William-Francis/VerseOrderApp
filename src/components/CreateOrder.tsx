@@ -3,19 +3,24 @@ import { ItemType, ProductType } from "@/data";
 import { createOrderServer } from "@/server";
 import { Button, Input, Table } from "@mui/joy";
 import { useState } from "react";
-
-export function CreateOrder({ products }: { products: Array<ProductType> }) {
-  const getFirstProduct = products[0];
-  const productsPriceDict = Object.fromEntries(products.map(x => [x.productId, x.price]));
-
+export function CreateOrder({
+  products,
+  firstProductId,
+}: {
+  products: Array<ProductType>;
+  firstProductId: number;
+}) {
+  const getFirstProduct: ProductType = products[0];
+  const productsPriceDict = Object.fromEntries(
+    products.map((x) => [x.productId, x.price])
+  );
   const initialItem: ItemType = {
     itemId: 1,
-    productId: getFirstProduct.productId,
-    overridePrice: productsPriceDict[getFirstProduct.productId],
+    productId: firstProductId,
+    overridePrice: productsPriceDict[firstProductId],
     quantity: 1,
     orderId: -1,
   };
-
   const [items, setItems] = useState<ItemType[]>([initialItem]);
   const [updateCount, setUpdateCount] = useState(1);
 
@@ -34,20 +39,20 @@ export function CreateOrder({ products }: { products: Array<ProductType> }) {
     setItems(itemsTemp);
   };
   const removeItem = (itemId: number) => {
-    const tempItems = items.filter(item => item.itemId !== itemId);
+    const tempItems = items.filter((item) => item.itemId !== itemId);
     setUpdateCount(updateCount + 1);
     setItems(tempItems);
   };
   const updateValue = (property: string, itemId: number, value: number) => {
     const tempItems = items;
-    var index = tempItems.findIndex(obj => {
+    var index = tempItems.findIndex((obj) => {
       return obj.itemId === itemId;
     });
     tempItems[index][property as keyof ItemType] = value;
 
     // if productId is updated we also need to update the overridePrice attribute
     if (property == "productId") {
-      var propIndex = products.findIndex(obj => {
+      var propIndex = products.findIndex((obj) => {
         return obj.productId === value;
       });
       tempItems[index].overridePrice = products[propIndex].price;
@@ -55,16 +60,15 @@ export function CreateOrder({ products }: { products: Array<ProductType> }) {
     setItems(tempItems);
     setUpdateCount(updateCount + 1);
   };
-
-  const createOrder = () => {
-    createOrderServer(items);
-  };
+  // const createOrder = () => {
+  //   createOrderServer(items);
+  // };
 
   return (
     <>
       <header className="flex justify-between items-center mb-4">
         <h1 className="text-2xl">New Order</h1>
-        <Button onClick={() => createOrder()}>Save</Button>
+        <Button onClick={() => createOrderServer(items)}>Save</Button>
       </header>
       <Table aria-label="basic table">
         <thead>
@@ -89,9 +93,15 @@ export function CreateOrder({ products }: { products: Array<ProductType> }) {
                   name="productId"
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   defaultValue={obj.productId + ""}
-                  onChange={e => updateValue("productId", obj.itemId, parseInt(e.target.value))}
+                  onChange={(e) =>
+                    updateValue(
+                      "productId",
+                      obj.itemId,
+                      parseInt(e.target.value)
+                    )
+                  }
                 >
-                  {products.map(product => (
+                  {products.map((product) => (
                     <option key={product.productId} value={product.productId}>
                       {product.name}
                     </option>
@@ -114,7 +124,13 @@ export function CreateOrder({ products }: { products: Array<ProductType> }) {
                   name="overridePrice"
                   defaultValue={obj.overridePrice}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
-                  onBlur={e => updateValue("overridePrice", obj.itemId, parseInt(e.target.value))}
+                  onBlur={(e) =>
+                    updateValue(
+                      "overridePrice",
+                      obj.itemId,
+                      parseInt(e.target.value)
+                    )
+                  }
                 />
               </td>
               <td>
@@ -123,7 +139,13 @@ export function CreateOrder({ products }: { products: Array<ProductType> }) {
                   name="quantity"
                   defaultValue={obj.quantity}
                   className="border border-slate-300 bg-transparent rounded px-2 py-1 outline-none focus-within:border-slate-100"
-                  onBlur={e => updateValue("quantity", obj.itemId, parseInt(e.target.value))}
+                  onBlur={(e) =>
+                    updateValue(
+                      "quantity",
+                      obj.itemId,
+                      parseInt(e.target.value)
+                    )
+                  }
                 />
               </td>
             </tr>
