@@ -26,6 +26,9 @@ dependencies:
   '@operativa/verse-sqlite':
     specifier: ^0.7.7
     version: 0.7.7(@operativa/verse@0.7.7)
+  immutable:
+    specifier: 5.0.0-beta.5
+    version: 5.0.0-beta.5
   next:
     specifier: 14.0.2
     version: 14.0.2(react-dom@18.2.0)(react@18.2.0)
@@ -35,6 +38,9 @@ dependencies:
   react-dom:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
+  ts-essentials:
+    specifier: ^9.4.1
+    version: 9.4.2(typescript@5.4.5)
 
 devDependencies:
   '@operativa/verse-cli':
