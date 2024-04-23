@@ -28,17 +28,7 @@
         "userId"
       ],
       "foreignKeys": [],
-      "conditions": [],
-      "data": [
-        {
-          "userId": -1,
-          "firstName": "Will"
-        },
-        {
-          "userId": -2,
-          "firstName": "Ben"
-        }
-      ]
+      "conditions": []
     },
     {
       "name": "Product",
@@ -83,15 +73,7 @@
         "productId"
       ],
       "foreignKeys": [],
-      "conditions": [],
-      "data": [
-        {
-          "productId": 1,
-          "name": "Potato",
-          "description": "Fresh from the farm",
-          "price": 10
-        }
-      ]
+      "conditions": []
     },
     {
       "name": "Order",
@@ -142,6 +124,17 @@
             "read": "(s) => (s ? new Date(s) : s)",
             "write": "(d) => (d ? d.toISOString() : d)"
           }
+        },
+        {
+          "name": "lock",
+          "column": "Lock",
+          "type": "boolean",
+          "nullable": false,
+          "convert": {
+            "read": "(v) => (v === 1 ? true : v === 0 ? false : v)",
+            "write": "(v) => (v === true ? 1 : v === false ? 0 : v)"
+          },
+          "kind": "boolean"
         }
       ],
       "label": "orders",
@@ -153,16 +146,7 @@
       "conditions": [],
       "concurrency": {
         "version": "token"
-      },
-      "data": [
-        {
-          "orderId": 1,
-          "token": 1,
-          "userId": 1,
-          "created": "2024-04-12T12:42:05.972Z",
-          "lastUpdated": "2024-04-12T12:42:05.972Z"
-        }
-      ]
+      }
     },
     {
       "name": "Item",
@@ -225,17 +209,7 @@
       "conditions": [],
       "concurrency": {
         "version": "version"
-      },
-      "data": [
-        {
-          "itemId": 1,
-          "version": 1,
-          "orderId": 1,
-          "productId": 1,
-          "quantity": 2,
-          "overridePrice": 8
-        }
-      ]
+      }
     }
   ],
   "values": [],
